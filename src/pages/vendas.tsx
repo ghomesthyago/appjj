@@ -31,6 +31,7 @@ export default function Vendas() {
   const FORMAT = 'dd/MM/yyyy';
   const [isLoading, setIsLoading] = useState(true)
   const [vendas, setVendas] = useState(clearData)
+  const [vendasEmporio, setVendasEmporio] = useState(clearData)
   const [range, setRange] = useState({from: new Date, to: new Date})
   const { from, to } = range
   const modifiers = { start: from, end: to }
@@ -54,10 +55,16 @@ export default function Vendas() {
       setIsLoading(true)
       try {
         await api.post('/getSalesRange', {'from': range.from, 'to': range.to}).then((response) => {
-          response.status === 200 ? setVendas(response.data) : setVendas(clearData)
-          setIsLoading(false)
-          //console.log(response.data)
+          if (response.status === 200) {
+            response.data[0].TOTAL === null ? setVendas(clearData) : setVendas(response.data)
+          }
         })
+        await api.post('/getSalesRangeEmporio', {'from': range.from, 'to': range.to}).then((response) => {
+          if (response.status === 200) {
+            response.data[0].TOTAL === null ? setVendasEmporio(clearData) : setVendasEmporio(response.data)
+          }
+        })
+        setIsLoading(false)
       } catch(err) {
         setIsLoading(true)
       }
@@ -227,6 +234,12 @@ export default function Vendas() {
         />
         <CollapseData shop={'Eldorado'} isLoading={isLoading} 
           sale={ vendas.filter(venda => venda.COD_LOJA === 3) }
+        />
+        <CollapseData shop={'TOTAL JJ'} isLoading={isLoading} 
+          sale={ vendas.filter(venda => venda.COD_LOJA === 4) }
+        />
+        <CollapseData shop={'Empório Jota'} isLoading={isLoading} 
+          sale={ vendasEmporio.filter(venda => venda.COD_LOJA === 1) }
         />
         </SimpleGrid>
       </Flex>

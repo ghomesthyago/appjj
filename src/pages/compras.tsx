@@ -1,216 +1,241 @@
-import { Flex, Box, SimpleGrid, Text, theme } from '@chakra-ui/react'
+import { Flex, Box, SimpleGrid, Text, theme, Spinner, Button, Icon, HStack,
+  Stack,
+  Stat,
+  StatLabel,
+  StatNumber
+} from '@chakra-ui/react'
+import CollapseCard from '../components/compras/CollapseCard'
+import { RiArrowRightSLine, RiArrowLeftSLine} from 'react-icons/ri'
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import dynamic from 'next/dynamic'
-import { ApexOptions } from 'apexcharts'
 
-const Chart = dynamic(() => import('react-apexcharts'), {
-  ssr: false,
-}) 
-
-export default function Dashboard() {
+export default function Metas() {
+  const monthsName = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro'
+  ]
+  const [compras, setCompras] = useState([])
   const [vendas, setVendas] = useState([])
-  const [contas, setContas] = useState([])
+  const [metas, setMetas] = useState([])
+  const [vendasMetas, setVendasMetas] = useState([])
+  const [vendasSetor, setVendasSetor] = useState([])
+  const [month, setMonth] = useState(new Date().getMonth() + 1)
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [isLoading, setIsLoading] = useState(true)
 
-  const datas = []
-  const datasContas = []
-
-  vendas.map((data) => {
-     datas.push(data.DIA)
-  })
-
-  contas.map((data) => {
-    datasContas.push(data.DTA_VENCIMENTO)
-  })
-
-  function getDataContas() {
-    return datasContas
-  }
-
-  function getDatas() {
-    return datas
-  }
-
-  const valor = vendas.map((data) => {
-    return data.TOTAL.toFixed(2)
-  })
-
-  const ticket = vendas.map((data) => {
-    return data.TICKET
-  })
-
-  const contasPagar = contas.map((data) => {
-    return data.TOTAL.toFixed(2)
-  })
+  const clearData = [
+    {"COD_LOJA":1,"TOTAL":0,"TICKET":0,"LUCRO_LIQ":0},
+    {"COD_LOJA":2,"TOTAL":0,"TICKET":0,"LUCRO_LIQ":0},
+    {"COD_LOJA":3,"TOTAL":0,"TICKET":0,"LUCRO_LIQ":0}
+  ]
   
-  const series = [
-    {
-      name: 'valor', data: valor
-    }
-  ]
-
-  const seriesBar = [
-    {
-      name: 'valor', data: contasPagar
-    }
-  ]
-
-  const tickets = [
-    {
-      name: 'Ticket', data: ticket
-    }
-  ]
-
-  const options: ApexOptions = {
-    chart: {
-      toolbar: {
-        show: false
-      },
-      zoom: {
-        enabled: false
-      },
-      foreColor: theme.colors.gray[500]
-    },
-    grid: {
-      show: false,
-    },
-    dataLabels: {
-      enabled: false
-    },
-    tooltip: {
-       enabled: true,
-       theme: 'gray.800',
-    },
-    xaxis: {
-      type: 'datetime',
-      axisBorder: {
-        color: theme.colors.gray[600]
-      },
-      axisTicks: {
-        color: theme.colors.gray[600]
-      },
-      categories: getDatas()
-    },
-    fill: {
-      opacity: 0.3,
-      type: 'gradient',
-      gradient: {
-        shade: 'dark',
-        opacityFrom: 0.7,
-        opacityTo: 0.3
-      }
-    }
-  }
-
-  const optionsBar: ApexOptions = {
-    xaxis: {
-      type: 'datetime',
-      axisBorder: {
-        color: theme.colors.gray[600]
-      },
-      axisTicks: {
-        color: theme.colors.gray[600]
-      },
-      categories: getDataContas()
-    },
-    chart: {
-      foreColor: theme.colors.gray[500],
-      toolbar: {
-        show: false
-      },
-      zoom: {
-        enabled: false
-      },
-      type: 'bar',
-      height: 350
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '90%',
-        colors: {
-          ranges: [{
-              from: 0,
-              to: 1000000,
-              color: '#FF1654'
-          }],
-          backgroundBarColors: [],
-          backgroundBarOpacity: 1,
-          backgroundBarRadius: 0,
-      },
-      },
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      show: true,
-      width: 2,
-      colors: ['transparent']
-    },
-    fill: {
-      opacity: 1
-    },
-    tooltip: {
-      enabled: true,
-      theme: 'gray.800',
-   },
-  }
-
   useEffect(() => {
     async function getVendas() {
-      await api.post('/getSales', {'days': 7}).then((response) => {
-        setVendas(response.data)
-      })
-      await api.post('/getDebits', {'start': 15, 'end': 15}).then((response) => {
-        setContas(response.data)
-      })
+      setCompras(clearData)
+      setVendas(clearData)
+      setMetas(clearData)
+      setVendasSetor(clearData)
+      setIsLoading(true)
+      try {
+        await api.post('/getPurchaseMonth', {'month': month, 'year': year}).then((response) => {
+          response.status === 200 ? setCompras(response.data) : setCompras(clearData)
+          setIsLoading(false)
+        })
+        await api.post('/getSalesMonth', {'month': month, 'year': year}).then((response) => {
+          response.status === 200 ? setVendas(response.data) : setVendas(clearData)
+          setIsLoading(false)
+        })
+        await api.post('/getPurchase', {'month': month, 'year': year}).then((response) => {
+          if( response.status === 200) {
+            setVendasMetas(response.data)
+          } else {
+            setVendasMetas(clearData)
+          }
+          setIsLoading(false)
+        })
+        await api.post('/getOrderGoals').then((response) => {
+          response.status === 200 ? setMetas(response.data) : setMetas(clearData)
+          setIsLoading(false)
+        })
+        await api.post('/getSalesGoal', {'month': month, 'year': year}).then((response) => {
+            response.status === 200 ? setVendasSetor(response.data) : setVendasSetor(clearData)
+            setIsLoading(false)
+        })
+      } catch(err) {
+        setCompras(clearData)
+        setIsLoading(false)
+      }
     }
     getVendas()
-  }, [])
+    
+  }, [month, year])
+
+  let vendal1 = 0
+  let vendal2 = 0
+  let vendal3 = 0
+
+  let valVendal1 = 0
+  let valVendal2 = 0
+  let valVendal3 = 0
+
+  compras.map(data => {
+    if(data.COD_LOJA === 1) {
+      vendal1 = data.TOTAL
+    }
+    if(data.COD_LOJA === 2) {
+      vendal2 = data.TOTAL
+    }
+    if(data.COD_LOJA === 3) {
+      vendal3 = data.TOTAL
+    }
+  })
+
   
+  vendas.map(data => {
+    if(data.COD_LOJA === 1) {
+      valVendal1 = data.TOTAL
+    }
+    if(data.COD_LOJA === 2) {
+      valVendal2 = data.TOTAL
+    }
+    if(data.COD_LOJA === 3) {
+      valVendal3 = data.TOTAL
+    }
+  })
+
   return (
     <Flex direction="column" h="100vh">
       <Header />
 
-      <Flex w="100%" my="6" maxWidth={1480} mx="auto" px="6">
+      <Flex w="100%" my="6" maxWidth={1480} mx="auto" p='10px'>
         <Sidebar />
 
-        <SimpleGrid flex="1" gap="4" minChildWidth="380px" align="flex-start">
-          <Box
-            p={["2","4"]}
-            bg="gray.800"
-            borderRadius={8}
-          >
-            <Text fontSize="lg" mb="4">Vendas da semana</Text>
-            <Chart options={options} series={series} type="area" height={160}/>
-          </Box>
-          <Box
-            p={["2","4"]}
-            bg="gray.800"
-            borderRadius={8}
-          >
-            <Text fontSize="lg" mb="4">Clientes</Text>
-            <Chart options={options} series={tickets} type="area" height={160}/>
-          </Box>
-          <Box
-            p={["2","4"]}
-            bg="gray.800"
-            borderRadius={8}
-          >
-            <Text fontSize="lg" mb="4">Compra X Vendas</Text>
-            <Chart options={options} series={tickets} type="area" height={160}/>
-          </Box>
-          <Box
-            p={["2","4"]}
-            bg="gray.800"
-            borderRadius={8}
-          >
-            <Text fontSize="lg" mb="4">Contas a pagar</Text>
-            <Chart options={optionsBar} series={seriesBar} type="bar" height={160}/>
-          </Box>
+        <SimpleGrid flex="1" gap="4" minChildWidth="355px" align="flex-start">
+          <Flex justify={'space-between'}>
+            <HStack align={'center'} justify={'space-between'} minW={'170px'}>
+              <Button as={RiArrowLeftSLine} size={'sm'} variant='unstyled'  onClick={() => {
+                  month > 0 ? setMonth(month - 1) : null
+                }} />
+              <Text>{monthsName[month - 1]}</Text>
+              <Button as={RiArrowRightSLine} size={'sm'} variant='unstyled'onClick={() => {
+                  month < 11 ? setMonth(month + 1) : null
+                }}/>
+            </HStack>
+            <HStack align={'center'} justify={'space-between'} minW={'170px'}>
+              <Button as={RiArrowLeftSLine} size={'sm'} variant='unstyled'  onClick={() => {
+                  year <= new Date().getFullYear() ? setYear(year - 1) : null
+                }}/>
+              <Text>{year}</Text>
+              <Button as={RiArrowRightSLine} size={'sm'} variant='unstyled'onClick={() => {
+                  year < new Date().getFullYear() ? setYear(year + 1) : null
+                }}/>
+            </HStack>
+          </Flex>
+          <CollapseCard 
+            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 1)}
+            salesGoal={vendasMetas.filter(data => data.COD_LOJA === 1)}
+            month={month}
+            year={year}
+            shop={'Anchieta'}
+            isLoading={isLoading}
+            vendasSetor={vendasSetor.filter(data => data.COD_LOJA === 1)}
+            grafValue={ 57.8 }
+            saleValue={ vendal1 }
+            valVenda={ valVendal1 }
+            marginValue={
+              compras.map(compras => {
+              if(compras.COD_LOJA === 1) { 
+                return ((compras.LUCRO_LIQ / compras.TOTAL) * 100).toFixed(1)
+              }
+            })}
+            ticketValue={
+              compras.map(compras => {
+                if(compras.COD_LOJA === 1) { 
+                  return ((compras.TOTAL / compras.TICKET).toFixed(2))
+                }
+              })
+            }
+          />
+          <CollapseCard 
+            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 2)}
+            salesGoal={vendasMetas.filter(data => data.COD_LOJA === 2)}
+            month={month}
+            year={year}
+            shop={'Antunes'}
+            vendasSetor={vendasSetor.filter(data => data.COD_LOJA === 2)}
+            isLoading={isLoading}
+            grafValue={ 32.7 }
+            valVenda={ valVendal2 }
+            saleValue={ vendal2 }
+             marginValue={
+              compras.map(compras => {
+              if(compras.COD_LOJA === 2) { 
+                return ((compras.LUCRO_LIQ / compras.TOTAL) * 100).toFixed(1)
+              }
+            })}
+            ticketValue={
+              compras.map(compras => {
+                if(compras.COD_LOJA === 2) { 
+                  return (compras.TOTAL / compras.TICKET).toFixed(2)
+                }
+              })
+            }
+          />
+          <CollapseCard 
+            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 3)}
+            salesGoal={vendasMetas.filter(data => data.COD_LOJA === 3)}
+            month={month}
+            year={year}
+            shop={'Eldorado'}
+            isLoading={isLoading}
+            grafValue={ 84.8 }
+            valVenda={ valVendal3 }
+            vendasSetor={vendasSetor.filter(data => data.COD_LOJA === 3)}
+            saleValue={ vendal3 }
+            marginValue={
+              compras.map(compras => {
+              if(compras.COD_LOJA === 3) { 
+                return ((compras.LUCRO_LIQ / compras.TOTAL) * 100).toFixed(1)
+              }
+            })}
+            ticketValue={
+              compras.map(compras => {
+                if(compras.COD_LOJA === 3) { 
+                  return (compras.TOTAL / compras.TICKET).toFixed(2)
+                }
+              })
+            }
+          />
+          <CollapseCard 
+            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 4)}
+            salesGoal={vendasMetas}
+            month={month}
+            year={year}
+            shop={'Total'}
+            isLoading={isLoading}
+            grafValue={ 57.8 }
+            valVenda={ valVendal1 + valVendal2 + valVendal3 }
+            vendasSetor={vendasSetor.filter(data => data.COD_LOJA === 3)}
+            saleValue={compras.reduce((soma, atual) => {
+              return (soma + atual.TOTAL)
+            }, 0)}
+            marginValue={
+              ((compras.reduce((soma, atual) => { return (soma + atual.LUCRO_LIQ)}, 0) / compras.reduce((soma, atual) => { return (soma + atual.TOTAL)}, 0)) * 100).toFixed(1)}
+            ticketValue={(compras.reduce((soma, atual) => { return (soma + atual.TOTAL)}, 0) / compras.reduce((soma, atual) => { return (soma + atual.TICKET)}, 0)).toFixed(2)}
+          />
         </SimpleGrid>
       </Flex>
     </Flex>

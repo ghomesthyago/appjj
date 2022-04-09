@@ -57,7 +57,7 @@ export function CollapseData(
                 <Text fontSize="16px" lineHeight='1'>{shop}</Text>
                 <Stack w={'100%'} display={'flex'} extAlign='center'>
                   <Text fontSize='36px' lineHeight='1'>{venda.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'})}</Text>
-                  <HStack spacing='16' p='0 15px 0 15px'>
+                  <HStack spacing='12' p='0 15px 0 15px'>
                     <VStack>
                       <Text fontSize='12px' lineHeight='1'>Ticket</Text>
                       <Text>{(venda / ticket).toLocaleString('pt-br',{style: 'currency', currency: 'BRL'})}</Text>
@@ -68,7 +68,7 @@ export function CollapseData(
                     </VStack>
                     <VStack>
                       <Text fontSize='12px' lineHeight='1'>Margem</Text>
-                      <Text>{((lucro / venda)  * 100).toFixed(1)}%</Text>
+                      <Text>{((lucro / venda)  * 100).toFixed(2)}%</Text>
                     </VStack>
                   </HStack>
                 </Stack>

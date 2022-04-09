@@ -1,149 +1,140 @@
-import { Box, Icon, Text, Flex, Divider, VStack, HStack } from '@chakra-ui/react'
+import { 
+  Table,
+  Thead,
+  Tbody,
+  Tfoot,
+  Tr,
+  Th,
+  Td,
+  TableCaption,
+  TableContainer,
+  Box,
+  Button,
+  Icon,
+  Text,
+  Flex,
+  Divider,
+  VStack,
+  HStack,
+  Progress,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  useDisclosure } from '@chakra-ui/react'
+
+import { RiArrowDownSFill, RiArrowUpSFill } from 'react-icons/ri'
 
 export default function SectionData({ 
   month, 
   year,
   sectionName,
+  shopName,
   sectionIcon,
   goals = [],
   salesGoal = []
 }) {
-  let meta = 0
-  const metaSemana1 = salesGoal.map(sale => {if(sale.SEMANA === 1) { return parseFloat(sale.TOTAL) }})
-  const metaSemana2 = salesGoal.map(sale => {if(sale.SEMANA === 2) { return parseFloat(sale.TOTAL) }})
-  const metaSemana3 = salesGoal.map(sale => {if(sale.SEMANA === 3) { return parseFloat(sale.TOTAL) }})
-  const metaSemana4 = salesGoal.map(sale => {if(sale.SEMANA === 4) { return parseFloat(sale.TOTAL) }})
-  const loja1 = salesGoal.filter(data => data.SEMANA === 1)
-    goals.map(data => {
-      if(sectionName === 'Açougue' && data.Department === 'Acougue') {
-        meta = data.Value
-      }
-      if(sectionName === 'Padaria' && data.Department === 'Frios') {
-        meta = data.Value
-      }
-      if(sectionName === 'Hortifruti' && data.Department === 'Hortifruti') {
-        meta = data.Value
-      }
-      if(sectionName === 'Mercearia' && data.Department === 'Mercearia') {
-        meta = data.Value
-      }
-      if(sectionName === 'Total') {
-        meta = data.reduce((soma, atual) => { return (soma + atual.Value)}, 0)
-      }
-    })
+
+  const venda = salesGoal.reduce((soma, atual) => soma + atual.VENDA, 0)
+  const lucro = salesGoal.reduce((soma, atual) => soma + atual.LUCRO_LIQ, 0)
   const date = new Date(`${year}.${month}.01`)
+  const meta = goals.reduce((soma, atual) => soma + parseFloat(atual.meta), 0)
+  let margemMeta = goals.reduce((soma, atual) => soma + parseFloat((atual.margem).toString().replace(',','.')), 0)
+  margemMeta = (margemMeta / goals.length) * 100
+  let somaTotal = []
   const ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-  
+
+  const dias = salesGoal.map(data => data.DIA)
+  const diasResumido = []
+  dias.map(dia => {
+    if(!diasResumido.includes(dia)) {
+      diasResumido.push(dia)
+    }
+  })
+  diasResumido.map(data => {
+    const venda = salesGoal.filter(dia => data === dia.DIA )
+    const somaVenda = venda.reduce((soma, atual) => soma + atual.VENDA, 0)
+    const somaLucro = venda.reduce((soma, atual) => soma + atual.LUCRO_LIQ, 0)
+    somaTotal.push({
+      DIA: data,
+      VENDA: somaVenda,
+      LUCRO_LIQ: somaLucro,
+      SECAO: sectionName,
+      MARGEM: (somaLucro / somaVenda)
+    })
+  })
+
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const dados = shopName === 'Total' ? somaTotal : salesGoal
   return (
     <>
       <Box
         color="white"
         backgroundColor='whiteAlpha.100'
-        p='10px 0'
-        mt="4"
+        p='10px'
+        m="16px 10px 0 10px"
         rounded="md"
         shadow="md"
         flexDirection='column'
         justify='flex-start'
       >
-        <Flex justify='space-between' align='flex-start' flexDirection='column'>
-          <Flex flex-direction='row' align='center' justify='space-between' w='100%' >
-          <Flex justify={'center'} align='center' flexDirection='column' minWidth='65px' borderRight='1px solid #FFF' pr='10px'>
-            <Icon as={ sectionIcon } w='40px' h='40px'/>
-            <Text fontSize='12px'>{ sectionName }</Text>
-          </Flex>
-            <Flex flexDirection='column' m='0 10px' w='100%'>
-              <Flex align='center' flexDirection='column' borderBottom='1px solid #c1c1c1' >
-                <HStack>
-                  <Text fontSize='12px' m='0 10px'>01 à 07</Text>
-                  <Text fontSize='12px'>({ ((metaSemana1[0] / (meta * 0.24)) * 100).toFixed(2) }% )</Text>
-                </HStack>
-                <Flex flexDirection='column' w='100%'>
-                  <Flex flexDirection='row' justify='space-around' >
-                    <Flex flexDirection='column' justify='center' align='flex-start'>
-                      <Text fontSize='10px'>Meta</Text>
-                      <Text>{ (meta * 0.24).toFixed(2) }</Text>
-                    </Flex>
-                    <Flex flexDirection='column' justify='center' ml='10px'>
-                      <Text fontSize='10px'>Venda</Text>
-                      <Text>{salesGoal.map(sale => {if(sale.SEMANA === 1) { return parseFloat(sale.TOTAL).toLocaleString('pt-br', {minimumFractionDigits: 2}) }})}</Text>
-                    </Flex>
-                    <Flex flexDirection='column' align='center'>
-                      <Text fontSize='10px'>Margem</Text>
-                      <Text ml='10px'>{salesGoal.map(sale => {if(sale.SEMANA === 1) { return (parseFloat(sale.LUCRO_LIQ) / parseFloat(sale.TOTAL) * 100).toFixed(1)}})}%</Text>
-                    </Flex>
-                  </Flex>
-                </Flex>
-              </Flex>
-              <Flex align='center' flexDirection='column' borderBottom='1px solid #c1c1c1' mt='10px' >
-                <HStack>
-                  <Text fontSize='12px' m='0 10px'>01 à 14</Text>
-                  <Text fontSize='12px'>({ ((metaSemana2[1] / (meta * 0.47)) * 100).toFixed(2) }% )</Text>
-                </HStack>
-                <Flex flexDirection='column' w='100%'>
-                  <Flex flexDirection='row' justify='space-around' >
-                    <Flex flexDirection='column' justify='center' align='flex-start'>
-                      <Text fontSize='10px'>Meta</Text>
-                      <Text>{ (meta * 0.47).toFixed(2) }</Text>
-                    </Flex>
-                    <Flex flexDirection='column' justify='center' ml='10px'>
-                      <Text fontSize='10px'>Venda</Text>
-                      <Text>{salesGoal.map(sale => {if(sale.SEMANA === 2) { return parseFloat(sale.TOTAL).toLocaleString('pt-br', {minimumFractionDigits: 2}) }})}</Text>
-                    </Flex>
-                    <Flex flexDirection='column' align='center'>
-                      <Text fontSize='10px'>Margem</Text>
-                      <Text ml='10px'>{salesGoal.map(sale => {if(sale.SEMANA === 2) { return (parseFloat(sale.LUCRO_LIQ) / parseFloat(sale.TOTAL) * 100).toFixed(1)}})}%</Text>
-                    </Flex>
-                  </Flex>
-                </Flex>
-              </Flex>
-              <Flex align='center' flexDirection='column' borderBottom='1px solid #c1c1c1' mt='10px' >
-                <HStack>
-                  <Text fontSize='12px' m='0 10px'>01 à 21</Text>
-                  <Text fontSize='12px'>( { (( metaSemana3[2] / (meta * 0.69)) * 100).toFixed(2) }% )</Text>
-                </HStack>
-                <Flex flexDirection='column' w='100%'>
-                  <Flex flexDirection='row' justify='space-around' >
-                    <Flex flexDirection='column' justify='center' align='flex-start'>
-                      <Text fontSize='10px'>Meta</Text>
-                      <Text>{ (meta * 0.69).toFixed(2) }</Text>
-                    </Flex>
-                    <Flex flexDirection='column' justify='center' ml='10px'>
-                      <Text fontSize='10px'>Venda</Text>
-                      <Text>{salesGoal.map(sale => {if(sale.SEMANA === 3) { return parseFloat(sale.TOTAL).toLocaleString('pt-br', {minimumFractionDigits: 2}) }})}</Text>
-                    </Flex>
-                    <Flex flexDirection='column' align='center'>
-                      <Text fontSize='10px'>Margem</Text>
-                      <Text ml='10px'>{salesGoal.map(sale => {if(sale.SEMANA === 3) { return (parseFloat(sale.LUCRO_LIQ) / parseFloat(sale.TOTAL) * 100).toFixed(1)}})}%</Text>
-                    </Flex>
-                  </Flex>
-                </Flex>
-              </Flex>
-              <Flex align='center' flexDirection='column' borderBottom='1px solid #c1c1c1' mt='10px' >
-                <HStack>
-                  <Text fontSize='12px' m='0 10px'>01 à {ultimoDia}</Text>
-                  <Text fontSize='12px'>( { (( metaSemana4[3] / meta) * 100).toFixed(2) }% )</Text>
-                </HStack>
-                <Flex flexDirection='column' w='100%'>
-                  <Flex flexDirection='row' justify='space-around' >
-                    <Flex flexDirection='column' justify='center' align='flex-start'>
-                      <Text fontSize='10px'>Meta</Text>
-                      <Text>{ meta.toFixed(2) }</Text>
-                    </Flex>
-                    <Flex flexDirection='column' justify='center' ml='10px'>
-                      <Text fontSize='10px'>Venda</Text>
-                      <Text>{salesGoal.map(sale => {if(sale.SEMANA === 4) { return parseFloat(sale.TOTAL).toLocaleString('pt-br', {minimumFractionDigits: 2}) }})}</Text>
-                    </Flex>
-                    <Flex flexDirection='column' align='center'>
-                      <Text fontSize='10px'>Margem</Text>
-                      <Text ml='10px'>{salesGoal.map(sale => {if(sale.SEMANA === 4) { return (parseFloat(sale.LUCRO_LIQ) / parseFloat(sale.TOTAL) * 100).toFixed(1)}})}%</Text>
-                    </Flex>
-                  </Flex>
-                </Flex>
-              </Flex>
-            </Flex>
-          </Flex>
-        </Flex >
+        <Text mb='8px'><Icon as={sectionIcon} w='40px' h='40px' mr='8px' />{sectionName} - {((venda / meta)*100).toFixed(2)}% Concluído</Text>
+        <Divider />
+        <Text textAlign={'justify'} width='100%' fontSize={12} m='12px 0 8px 0'>Meta: {meta.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'})} ({margemMeta.toFixed(2)}%) - Venda: {venda.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'})} ({((lucro / venda) * 100).toFixed(2)}%)</Text>
+        <Progress value={(venda / meta )*100}  size='sm' colorScheme='cyan' />
+        <Flex justifyContent='center' alignItems='center' m='12px 0 4px 0'>
+          <Button onClick={onOpen} variant='link' color='gray.50' fontWeight='normal'>Ver detalhes</Button>
+        </Flex>
+
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent bg='purple.50' m='8px'>
+          <ModalHeader color='gray.900'>{sectionName} - {shopName}</ModalHeader>
+          <ModalCloseButton color={'gray.900'}/>
+          <ModalBody color='gray.900' p='12px'>
+            <TableContainer>
+              <Table variant='striped' colorScheme='gray' size='sm'>
+                <Thead>
+                  <Tr>
+                    <Th textAlign={'center'}>Dia</Th>
+                    <Th textAlign={'center'}>Meta</Th>
+                    <Th textAlign={'center'}>Venda</Th>
+                    <Th isNumeric textAlign={'center'}>Margem</Th>
+                  </Tr>
+                </Thead>
+                <Tbody >
+                  {
+                    dados.map(data => {
+                      //console.log(shopName)
+                      const day = new Date(data.DIA).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+                      const margem = ((data.LUCRO_LIQ / data.VENDA) * 100)
+                      const meta = goals.find(data => data.dia === day.substring(0,10))
+                      const margemMeta = meta.margem
+                      return (
+                        <Tr>
+                          <Td pl='8px' pt='4px' pb='4px' textAlign={'center'}>{day.substring(1,2)}</Td>
+                          <Td pt='4px' pb='4px' textAlign={'center'}>{meta.meta.toFixed(2)}</Td>
+                          <Td pt='4px' pb='4px' textAlign={'center'}>{data.VENDA.toFixed(2)}</Td>
+                          <Td pr='8px' pb='4px' pt='4px' display='flex' justifyContent='space-between' alignItems={'center'}>{margem.toFixed(2)}% {margem > (parseFloat(margemMeta.replace(",",".")) * 100) ? <RiArrowUpSFill color='green' size={'20px'}/> : <RiArrowDownSFill size={'20px'} color='red'/>}</Td>
+                        </Tr>
+                      )
+                    })
+                  }
+                </Tbody>
+              </Table>
+            </TableContainer>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button variant='ghost' colorScheme='gray' color='gray.900' mr={3} onClick={onClose}>
+              Fechar
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
       </Box>
     </>
   )

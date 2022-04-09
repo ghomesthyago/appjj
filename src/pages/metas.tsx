@@ -13,6 +13,7 @@ import { Sidebar } from "../components/Sidebar";
 import dynamic from 'next/dynamic'
 
 export default function Metas() {
+
   const monthsName = [
     'Janeiro',
     'Fevereiro',
@@ -30,6 +31,7 @@ export default function Metas() {
   const [vendas, setVendas] = useState([])
   const [metas, setMetas] = useState([])
   const [vendasMetas, setVendasMetas] = useState([])
+  const [vendasMetasTotal, setVendasMetasTotal] = useState([])
   const [month, setMonth] = useState(new Date().getMonth() + 1)
   const [year, setYear] = useState(new Date().getFullYear())
   const [isLoading, setIsLoading] = useState(true)
@@ -44,46 +46,78 @@ export default function Metas() {
     async function getVendas() {
       setIsLoading(true)
       try {
-        await api.post('/getSalesMonth', {'month': month, 'year': year}).then((response) => {
+
+        await api.post('/getSalesDay', {'month': month, 'year': year}).then((response) => {
           response.status === 200 ? setVendas(response.data) : setVendas(clearData)
-          setIsLoading(false)
         })
-        await api.post('/getSalesGoal', {'month': month, 'year': year}).then((response) => {
-          if( response.status === 200) {
-            setVendasMetas(response.data)
-          } else {
-            setVendasMetas(clearData)
-          }
-          setIsLoading(false)
-        })
-        await api.post('/getGoals').then((response) => {
+        await api.post('/getGoalsDay', {'month': month, 'year': year}).then((response) => {
           response.status === 200 ? setMetas(response.data) : setMetas(clearData)
-          setIsLoading(false)
         })
+
+        setIsLoading(false)
       } catch(err) {
         setVendas(clearData)
         setIsLoading(false)
       }
     }
     getVendas()
-    
   }, [month, year])
 
-  let vendal1 = 0
-  let vendal2 = 0
-  let vendal3 = 0
+  const vendal1 = vendas.reduce((acc, vendas) => {
+    if (vendas.COD_LOJA === 1) {
+      return acc + vendas.VENDA
+    } else {
+      return acc
+    }
+  }, 0)
 
-  vendas.map(data => {
-    if(data.COD_LOJA === 1) {
-      vendal1 = data.TOTAL
+  const lucrol1 = vendas.reduce((acc, vendas) => {
+    if (vendas.COD_LOJA === 1) {
+      return acc + vendas.LUCRO_LIQ
+    } else {
+      return acc
     }
-    if(data.COD_LOJA === 2) {
-      vendal2 = data.TOTAL
+  }, 0)
+
+  const vendal2 = vendas.reduce((acc, vendas) => {
+    if (vendas.COD_LOJA === 2) {
+      return acc + vendas.VENDA
+    } else {
+      return acc
     }
-    if(data.COD_LOJA === 3) {
-      vendal3 = data.TOTAL
+  }, 0)
+
+  const lucrol2 = vendas.reduce((acc, vendas) => {
+    if (vendas.COD_LOJA === 2) {
+      return acc + vendas.LUCRO_LIQ
+    } else {
+      return acc
     }
-  })
+  }, 0)
+
+  const vendal3 = vendas.reduce((acc, vendas) => {
+    if (vendas.COD_LOJA === 3) {
+      return acc + vendas.VENDA
+    } else {
+      return acc
+    }
+  }, 0)
+
+  const lucrol3 = vendas.reduce((acc, vendas) => {
+    if (vendas.COD_LOJA === 3) {
+      return acc + vendas.LUCRO_LIQ
+    } else {
+      return acc
+    }
+  }, 0)
+
+  const vendaGeral = vendas.reduce((acc, vendas) => {
+      return acc + vendas.VENDA
+  }, 0)
+
+  const lucroGeral = vendas.reduce((acc, vendas) => {
+      return acc + vendas.LUCRO_LIQ
+  }, 0)
 
   return (
     <Flex direction="column" h="100vh">
@@ -96,26 +130,40 @@ export default function Metas() {
           <Flex justify={'space-between'}>
             <HStack align={'center'} justify={'space-between'} minW={'170px'}>
               <Button as={RiArrowLeftSLine} size={'sm'} variant='unstyled'  onClick={() => {
-                  month > 0 ? setMonth(month - 1) : null
+                  if (month > 4 && year === 2022) {
+                    setMonth(month - 1)
+                  }
+                  if (month > 0 && year > 2022) {
+                    setMonth(month - 1)
+                  }
                 }} />
               <Text>{monthsName[month - 1]}</Text>
-              <Button as={RiArrowRightSLine} size={'sm'} variant='unstyled'onClick={() => {
-                  month < 11 ? setMonth(month + 1) : null
-                }}/>
+              <Button
+              as={RiArrowRightSLine}
+              size={'sm'}
+              variant='unstyled'
+              onClick={() => {
+                 if (month > 2 && year === 2022 && month < new Date().getMonth()) {
+                  setMonth(month + 1)
+                 }
+                 if (month < 11 && year > 2022 && year < new Date().getFullYear()) {
+                  setMonth(month + 1)
+                 }
+              }}/>
             </HStack>
             <HStack align={'center'} justify={'space-between'} minW={'170px'}>
-              <Button as={RiArrowLeftSLine} size={'sm'} variant='unstyled'  onClick={() => {
-                  year <= new Date().getFullYear() ? setYear(year - 1) : null
+              <Button disabled={year <= 2022 ? true : false} as={RiArrowLeftSLine} size={'sm'} variant='unstyled' onClick={() => {
+                  year > 2022 ? setYear(year - 1) : null
                 }}/>
               <Text>{year}</Text>
-              <Button as={RiArrowRightSLine} size={'sm'} variant='unstyled'onClick={() => {
+              <Button disabled={year === new Date().getFullYear() ? true : false} as={RiArrowRightSLine} size={'sm'} variant='unstyled'onClick={() => {
                   year < new Date().getFullYear() ? setYear(year + 1) : null
                 }}/>
             </HStack>
           </Flex>
           <CollapseCard 
-            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 1)}
-            salesGoal={vendasMetas.filter(data => data.COD_LOJA === 1)}
+            goals={metas.filter(data => data.loja === 1)}
+            salesGoal={vendas.filter(data => data.COD_LOJA === 1)}
             month={month}
             year={year}
             shop={'Anchieta'}
@@ -123,12 +171,7 @@ export default function Metas() {
             grafValue={ 57.8 }
             saleValue={ vendal1 }
             
-            marginValue={
-              vendas.map(vendas => {
-              if(vendas.COD_LOJA === 1) { 
-                return ((vendas.LUCRO_LIQ / vendas.TOTAL) * 100).toFixed(1)
-              }
-            })}
+            marginValue={ ((lucrol1 / vendal1 ) * 100).toFixed(2) }
             ticketValue={
               vendas.map(vendas => {
                 if(vendas.COD_LOJA === 1) { 
@@ -138,20 +181,15 @@ export default function Metas() {
             }
           />
           <CollapseCard 
-            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 2)}
-            salesGoal={vendasMetas.filter(data => data.COD_LOJA === 2)}
+            goals={metas.filter(data => data.loja === 2)}
+            salesGoal={vendas.filter(data => data.COD_LOJA === 2)}
             month={month}
             year={year}
             shop={'Antunes'}
             isLoading={isLoading}
             grafValue={ 32.7 }
             saleValue={ vendal2 }
-             marginValue={
-              vendas.map(vendas => {
-              if(vendas.COD_LOJA === 2) { 
-                return ((vendas.LUCRO_LIQ / vendas.TOTAL) * 100).toFixed(1)
-              }
-            })}
+            marginValue={ ((lucrol2 / vendal2 ) * 100).toFixed(2) }
             ticketValue={
               vendas.map(vendas => {
                 if(vendas.COD_LOJA === 2) { 
@@ -161,20 +199,15 @@ export default function Metas() {
             }
           />
           <CollapseCard 
-            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 3)}
-            salesGoal={vendasMetas.filter(data => data.COD_LOJA === 3)}
+            goals={metas.filter(data => data.loja === 3)}
+            salesGoal={vendas.filter(data => data.COD_LOJA === 3)}
             month={month}
             year={year}
             shop={'Eldorado'}
             isLoading={isLoading}
             grafValue={ 84.8 }
             saleValue={ vendal3 }
-            marginValue={
-              vendas.map(vendas => {
-              if(vendas.COD_LOJA === 3) { 
-                return ((vendas.LUCRO_LIQ / vendas.TOTAL) * 100).toFixed(1)
-              }
-            })}
+            marginValue={ (( lucrol3 / vendal3 ) * 100).toFixed(2) }
             ticketValue={
               vendas.map(vendas => {
                 if(vendas.COD_LOJA === 3) { 
@@ -184,18 +217,15 @@ export default function Metas() {
             }
           />
           <CollapseCard 
-            goals={metas.filter(metas => metas.Month === month && metas.Year === year && metas.Shop === 4)}
-            salesGoal={vendasMetas}
+            goals={metas}
+            salesGoal={vendas}
             month={month}
             year={year}
             shop={'Total'}
             isLoading={isLoading}
             grafValue={ 57.8 }
-            saleValue={vendas.reduce((soma, atual) => {
-              return (soma + atual.TOTAL)
-            }, 0).toLocaleString('pt-br',{style: 'currency', currency: 'BRL'})}
-            marginValue={
-              ((vendas.reduce((soma, atual) => { return (soma + atual.LUCRO_LIQ)}, 0) / vendas.reduce((soma, atual) => { return (soma + atual.TOTAL)}, 0)) * 100).toFixed(1)}
+            saleValue={vendaGeral}
+            marginValue={((lucroGeral / vendaGeral) * 100).toFixed(2)}
             ticketValue={(vendas.reduce((soma, atual) => { return (soma + atual.TOTAL)}, 0) / vendas.reduce((soma, atual) => { return (soma + atual.TICKET)}, 0)).toFixed(2)}
           />
         </SimpleGrid>

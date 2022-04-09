@@ -25,23 +25,12 @@ export function Profile({showProfileData = true}: ProfileProps) {
       }
 
       const decoded = Object.entries(jwt.decode(localStorage.getItem('@jj-token')))
-      
-      decoded.map(obj => {
-        obj.map(data => {
-          if(typeof data === 'object') {
-            data.map(user => {
-              setUserName(user.DES_NOME)
-              setMail(user.DES_EMAIL)
-            })
-          }
-          
-        })
-        if(obj[0] === 'exp'){
-          if(new Date(obj[1] * 1000) < new Date){
-            router.push('/')
-          }
-        }
-      })
+      decoded[0][1].map(info => {
+        setUserName(info.DES_NOME)
+        setMail(info.DES_EMAIL)
+      })   
+      //console.log(new Date(decoded[2][1] * 1000))
+      new Date(decoded[2][1] * 1000) < new Date ?  router.push('/') : null 
     } else {
       console.log('not window')
     }

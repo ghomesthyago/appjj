@@ -43,7 +43,7 @@ export default function SignIn() {
       } else {
         if (typeof window !== "undefined") {
           localStorage.setItem('@jj-token',response.data)
-          router.push('/dashboard')
+          router.push('/vendas')
         }
       }
     })
@@ -53,7 +53,7 @@ export default function SignIn() {
       <Flex as="form" width="100%" maxWidth="360px" bg='#ef342c' p="4" borderRadius="8" flexDir="column" onSubmit={handleSubmit(handleSignIn)}>
         <Flex justify='center' mb='60px'>
           <SlideFade in={true} offsetY="120px">
-            <Image src='logoFull.png' w='250px' h='250px'/>
+            <Image src='logoFull.png' w='300px' h='250px'/>
           </SlideFade>
         </Flex>
         <Stack spacing={4}>
