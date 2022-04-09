@@ -29,7 +29,8 @@ export function Profile({showProfileData = true}: ProfileProps) {
       setUserName(decoded[0][1][0].DES_NOME)
       setMail(decoded[0][1][0].DES_EMAIL)
       //console.log(new Date(decoded[2][1] * 1000))
-      new Date(decoded[2][1] * 1000) < new Date ?  router.push('/') : null 
+      const dateExp = decoded[2][1] * 1000
+      new Date(dateExp) < new Date ?  router.push('/') : null 
     } else {
       console.log('not window')
     }
